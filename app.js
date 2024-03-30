@@ -1,14 +1,15 @@
 const express = require('express');
 const http = require('http');
 const socketIO = require('socket.io');
-const path = require('path');
 
 const app = express();
 const server = http.createServer(app);
 const io = socketIO(server);
 
-// Serve static files from the public directory
-app.use(express.static(path.join(__dirname, 'public')));
+// Serve the HTML page
+app.get('/', (req, res) => {
+  res.sendFile(__dirname + '/web.html');
+});
 
 // Socket.IO connection handling
 io.on('connection', (socket) => {
