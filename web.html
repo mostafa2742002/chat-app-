@@ -49,8 +49,8 @@
         // Import the io function from the ESM bundle
         import { io } from "https://cdn.socket.io/4.7.2/socket.io.esm.min.js";
 
-        // Connect to your locally running Express server
-        const socket = io('http://localhost:3000');
+        // Connect to your deployed server
+        const socket = io();
 
         // Function to add messages to the chat
         function addMessage(msg) {
