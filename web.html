@@ -50,7 +50,8 @@
         import { io } from "https://cdn.socket.io/4.7.2/socket.io.esm.min.js";
 
         // Connect to your locally running Express server
-        const socket = io('https://chat-app-d7ko.onrender.com');
+        //const socket = io('https://chat-app-d7ko.onrender.com'); 
+        const socket = io('http://localhost:3000');
 
         // Function to add messages to the chat
         function addMessage(msg) {
@@ -71,6 +72,7 @@
         // Handle form submission
         document.getElementById('form').addEventListener('submit', function(event) {
             event.preventDefault();
+            
             const input = document.getElementById('input');
             if (input.value) {
                 // Emit a chat message event to the server
