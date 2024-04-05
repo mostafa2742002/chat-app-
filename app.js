@@ -11,8 +11,8 @@ app.get('/', (req, res) => {
   res.sendFile(__dirname + '/web.html');
 });
 
-// datastructure to store connected clients
-let clients = [];
+// Store connected clients and their socket ids
+let clients = {};
 
 // Socket.IO connection handling
 io.on('connection', (socket) => {
@@ -20,33 +20,42 @@ io.on('connection', (socket) => {
   
   // Function to broadcast updated user list to all clients
   const broadcastUserList = () => {
-    io.emit('get_users', clients);
+    io.emit('get_users', Object.keys(clients));
   };
 
   // When a new user connects
   socket.on("username", (username) => {
     console.log('Username: ' + username);
     socket.username = username;
-    clients.push(username);
+    clients[username] = socket.id;
     broadcastUserList();
     // Broadcast to all connected users that a new user has joined
-    socket.broadcast.emit('is_online', socket.username);
+    socket.broadcast.emit('is_online', username);
   });
 
   // Listen for chat messages
-  socket.on('chat message', (msg) => {
-    console.log('Message: ' + msg);
-    // Broadcast the message to all connected clients
-    io.emit('chat message', msg);
+  socket.on('chat message', (data) => {
+    const { to, message } = data;
+    const receiverSocketId = clients[to];
+    if (receiverSocketId) {
+      io.to(receiverSocketId).emit('private message', { from: socket.username, message });
+    }
+    else if (to === 'all') {
+      io.emit('chat message', { from: socket.username, message });
+    }
+    else {
+      socket.emit('error', 'User not available');
+    }
   });
 
   // Handle disconnection
   socket.on('disconnect', () => {
-    if (socket.username) {
+    const username = socket.username;
+    if (username) {
       // Broadcast to all connected users that a user has left
-      io.emit('user_disconnected', socket.username);
+      io.emit('user_disconnected', username);
       // Remove the disconnected user from the list
-      clients = clients.filter((client) => client !== socket.username);
+      delete clients[username];
       broadcastUserList();
       console.log('User disconnected');
     }

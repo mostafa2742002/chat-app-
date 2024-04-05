@@ -36,6 +36,10 @@
         #input, button {
             margin-right: 10px;
         }
+
+        #userList {
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
@@ -49,34 +53,34 @@
     <ul id="messages"></ul>
     <form id="form" action="">
         <input id="input" autocomplete="off" /><button>Send</button>
-
     </form>
 
     <script type="module">
         // Import the io function from the ESM bundle
         import { io } from "https://cdn.socket.io/4.7.2/socket.io.esm.min.js";
 
-        // Connect to your locally running Express server
-        //const socket = io('https://chat-app-d7ko.onrender.com'); 
+        // Connect to the server
         const socket = io('http://localhost:3000');
-        // variable to store the username
-        var usernam = '';
+
         // Function to add messages to the chat
         function addMessage(msg) {
             const messages = document.getElementById('messages');
             const item = document.createElement('li');
             item.textContent = msg;
             messages.appendChild(item);
-
             // Scroll to the bottom of the chat
             messages.scrollTop = messages.scrollHeight;
         }
 
-        // Listen for chat messages
-        socket.on('chat message', (msg) => {
-            addMessage(msg);
+        socket.on('chat message', (data) => {
+            addMessage(data.message);
         });
 
+        // Listen for chat messages
+        socket.on('private message', (data) => {
+            const { from, message } = data;
+            addMessage(`[Private from ${from}]: ${message}`);
+        });
 
         // Update the user list
         socket.on('get_users', (users) => {
@@ -85,6 +89,14 @@
             users.forEach(user => {
                 const item = document.createElement('li');
                 item.textContent = user;
+                // Add click event listener to start private chat
+                item.addEventListener('click', () => {
+                    const to = user;
+                    const message = prompt(`Enter your message to ${to}:`);
+                    if (message) {
+                        socket.emit('chat message', { to, message });
+                    }
+                });
                 userList.appendChild(item);
             });
         });
@@ -95,10 +107,11 @@
 
         // Prompt user for username
         const username = prompt("Enter your username:");
+        var u = '';
         if (username) {
             // Send username to the server
-            usernam = username.trim();
             socket.emit("username", username);
+            u = username;
         } else {
             alert("Username is required.");
             location.reload(); // Reload the page if username is not provided
@@ -111,8 +124,8 @@
             const input = document.getElementById('input');
             if (input.value) {
                 // Emit a chat message event to the server
-                var msg = usernam + ': ' + input.value;
-                socket.emit('chat message', msg);
+                u = username + ' : ' + input.value;
+                socket.emit('chat message', { to: 'all', message: u });
                 input.value = '';
             }
         });
