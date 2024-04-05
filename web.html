@@ -39,10 +39,17 @@
     </style>
 </head>
 <body>
-
+    <h1>Socket.IO Chat</h1>
+    <h2>Users</h2>
+    <ul id="userList"></ul>
+    <h2>Messages</h2>
+    <hr>
+    <h3>Chat</h3>
+    <hr>
     <ul id="messages"></ul>
     <form id="form" action="">
         <input id="input" autocomplete="off" /><button>Send</button>
+
     </form>
 
     <script type="module">
@@ -52,7 +59,8 @@
         // Connect to your locally running Express server
         //const socket = io('https://chat-app-d7ko.onrender.com'); 
         const socket = io('http://localhost:3000');
-
+        // variable to store the username
+        var usernam = '';
         // Function to add messages to the chat
         function addMessage(msg) {
             const messages = document.getElementById('messages');
@@ -69,6 +77,33 @@
             addMessage(msg);
         });
 
+
+        // Update the user list
+        socket.on('get_users', (users) => {
+            const userList = document.getElementById('userList');
+            userList.innerHTML = ''; // Clear the list before updating
+            users.forEach(user => {
+                const item = document.createElement('li');
+                item.textContent = user;
+                userList.appendChild(item);
+            });
+        });
+
+        socket.on('is_online', (username) => {
+            addMessage(username + ' is online');
+        });
+
+        // Prompt user for username
+        const username = prompt("Enter your username:");
+        if (username) {
+            // Send username to the server
+            usernam = username.trim();
+            socket.emit("username", username);
+        } else {
+            alert("Username is required.");
+            location.reload(); // Reload the page if username is not provided
+        }
+
         // Handle form submission
         document.getElementById('form').addEventListener('submit', function(event) {
             event.preventDefault();
@@ -76,7 +111,8 @@
             const input = document.getElementById('input');
             if (input.value) {
                 // Emit a chat message event to the server
-                socket.emit('chat message', input.value);
+                var msg = usernam + ': ' + input.value;
+                socket.emit('chat message', msg);
                 input.value = '';
             }
         });
