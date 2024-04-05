@@ -101,6 +101,10 @@
             });
         });
 
+        socket.on('user_disconnected', (username) => {
+            addMessage(username + ' disconnected');
+        });
+
         socket.on('is_online', (username) => {
             addMessage(username + ' is online');
         });
